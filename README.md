@@ -1,33 +1,36 @@
 # 📊 Linear Regression From Scratch (Math + Python)
 
-This project implements Multiple Linear Regression from scratch using only NumPy. It covers both the closed-form Ordinary Least Squares (OLS) solution and Gradient Descent optimization, with full mathematical derivations, visualizations, and supporting PDF documents.
+This my implementionof  Multiple Linear Regression from scratch using only NumPy, 
+with full mathematical derivations, visualizations, and supporting PDF documents.
 
----
+
 
 ## Topics Covered
 
+### 📐 Core Math
 - Mean Squared Error (MSE)
-- Ordinary Least Squares (OLS) Estimation
--  Gradient Descent Optimization
-- 📉 Loss Function: Derivation and Implementation
-- 🎯 Coefficient Accuracy & Inference:
-  - Standard Error of β̂
-  - Confidence Intervals
-  - T-tests, F-tests
-- 📊 Model Accuracy:
-  - Residual Standard Error (RSE)
-  - R-Squared (R²)
-  - Prediction Intervals
-- 🔍 Assumptions & Diagnostics:
-  - Linearity
-  - Independence of Errors
-  - Homoscedasticity / Heteroscedasticity
-  - Residual Analysis & Plots
-- ⚠️ Challenges in Linear Regression:
-  - Outliers
-  - High Leverage Points
-  - Multicollinearity
+- Ordinary Least Squares (OLS)
+- Gradient Descent
 
+### 📏 Inference on Coefficients
+- Standard Error of β̂
+- Confidence Intervals
+- F-test, T-test
+
+### 📊 Model Accuracy
+- Residual Standard Error (RSE)
+- R-Squared (R²)
+- Prediction Intervals
+
+### 🧪 Assumptions & Diagnostics
+- Linearity
+- Heteroscedasticity
+- Residual Analysis
+
+### ⚠️ Challenges in Linear Regression
+- Outliers
+- High Leverage Points
+- Multicollinearity
 
 ## 💻 How To Run
 
@@ -43,10 +46,9 @@ python main.py
 ```
 ## 📚 References
 
-- An Introduction to Statistical Learning — James, Witten, Hastie, Tibshirani
+🔗 My Machine Leanring Notes GitHub Repo: ![Isl-python](https://github.com/0xHadyy/Linear-Regression-From-Scratch)
 
-- The Elements of Statistical Learning — Hastie, Tibshirani, Friedman
+📘 An Introduction to Statistical Learning — James, Witten, Hastie, Tibshirani
 
-- My own derivations, notes, and code
+📗 The Elements of Statistical Learning — Hastie, Tibshirani, Friedman
 
-- GitHub Repo: https://github.com/0xHadyy/Linear-Regression-From-Scratch
