@@ -56,6 +56,57 @@ def standard_error_beta(mse, gram_matrix):
     return beta_hat_variance, beta_hat_standard_error
 
 
+def confidence_interval_beta(beta_hat, standard_error, df):
+    # compute a 95% confidence interval for the coefficients beta , alpha = 0.05
+    t_critical_95 = {
+        1: 12.706,
+        2: 4.303,
+        3: 3.182,
+        4: 2.776,
+        5: 2.571,
+        6: 2.447,
+        7: 2.365,
+        8: 2.306,
+        9: 2.262,
+        10: 2.228,
+        11: 2.201,
+        12: 2.179,
+        13: 2.160,
+        14: 2.145,
+        15: 2.131,
+        16: 2.120,
+        17: 2.110,
+        18: 2.101,
+        19: 2.093,
+        20: 2.086,
+        21: 2.080,
+        22: 2.074,
+        23: 2.069,
+        24: 2.064,
+        25: 2.060,
+        26: 2.056,
+        27: 2.052,
+        28: 2.048,
+        29: 2.045,
+        30: 2.042,
+        40: 2.021,
+        60: 2.000,
+        80: 1.990,
+        100: 1.984,
+        1000: 1.962,  # basically z_critical
+    }
+    closest_df = min(t_critical_95, key=lambda x: abs(x - df))
+    t_value = t_critical_95[closest_df]
+    upper_bound = beta_hat + (t_value * standard_error)
+    lower_bound = beta_hat - (t_value * standard_error)
+    confidence_interval = np.stack((lower_bound, upper_bound))
+    return confidence_interval
+
+
+def f_statistic():
+    pass
+
+
 X, y, beta_true, noise = generate_dummy_data()
 
 beta_hat, gram_matrix = ols_estimate(X, y)
