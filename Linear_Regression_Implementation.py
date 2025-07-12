@@ -1,7 +1,42 @@
 import numpy as np
-import math
+import random
 
-from numpy.linalg import LinAlgError
+t_table = {
+    1: 12.706,
+    2: 4.303,
+    3: 3.182,
+    4: 2.776,
+    5: 2.571,
+    6: 2.447,
+    7: 2.365,
+    8: 2.306,
+    9: 2.262,
+    10: 2.228,
+    11: 2.201,
+    12: 2.179,
+    13: 2.160,
+    14: 2.145,
+    15: 2.131,
+    16: 2.120,
+    17: 2.110,
+    18: 2.101,
+    19: 2.093,
+    20: 2.086,
+    21: 2.080,
+    22: 2.074,
+    23: 2.069,
+    24: 2.064,
+    25: 2.060,
+    26: 2.056,
+    27: 2.052,
+    28: 2.048,
+    29: 2.045,
+    30: 2.042,
+    40: 2.021,
+    60: 2.000,
+    120: 1.980,
+    float("inf"): 1.960,  # Z‐value approximation
+}
 
 
 # Generating dummy data
@@ -65,45 +100,8 @@ def standard_error_beta(mse, gram_matrix):
     return beta_hat_variance, beta_hat_standard_error
 
 
-def confidence_interval_beta(beta_hat, standard_error, df):
+def confidence_interval_beta(beta_hat, standard_error, df, t_critical_95):
     # compute a 95% confidence interval for the coefficients beta , alpha = 0.05
-    t_critical_95 = {
-        1: 12.706,
-        2: 4.303,
-        3: 3.182,
-        4: 2.776,
-        5: 2.571,
-        6: 2.447,
-        7: 2.365,
-        8: 2.306,
-        9: 2.262,
-        10: 2.228,
-        11: 2.201,
-        12: 2.179,
-        13: 2.160,
-        14: 2.145,
-        15: 2.131,
-        16: 2.120,
-        17: 2.110,
-        18: 2.101,
-        19: 2.093,
-        20: 2.086,
-        21: 2.080,
-        22: 2.074,
-        23: 2.069,
-        24: 2.064,
-        25: 2.060,
-        26: 2.056,
-        27: 2.052,
-        28: 2.048,
-        29: 2.045,
-        30: 2.042,
-        40: 2.021,
-        60: 2.000,
-        80: 1.990,
-        100: 1.984,
-        1000: 1.962,  # basically z_critical
-    }
     closest_df = min(t_critical_95, key=lambda x: abs(x - df))
     t_value = t_critical_95[closest_df]
     upper_bound = beta_hat + (t_value * standard_error)
@@ -141,10 +139,10 @@ def r_squared(RSS, TSS):
     return r_squared
 
 
-def standard_error_mean_reponse(X0, MSE, gram_matrix):
+def standard_error_reponse(X0, MSE, gram_matrix):
     # compute the variance and standard error in a new observed response Y0
     p = X0.shape[0]
-    if gram_matrix != (p, p):
+    if gram_matrix.shape != (p, p):
         raise ValueError(f"Gram matrix shape {gram_matrix.shape}")
     if MSE < 0:
         raise ValueError("MSE is zero or negative")
@@ -156,16 +154,30 @@ def standard_error_mean_reponse(X0, MSE, gram_matrix):
     var_Y0 = MSE * (
         X0_transpose @ inv_gram_matrix @ X0
     )  # the formula var(Y_0)=MSE*X_0^T(Gram matrix)^-1X_0
+    var_Y0_hat = MSE * (1 + X0_transpose @ inv_gram_matrix @ X0)
+    se_Y0_hat = np.sqrt(var_Y0_hat)
     se_Y0 = np.sqrt(var_Y0)
-    return var_Y0, se_Y0
+    return var_Y0, se_Y0, var_Y0_hat, se_Y0_hat
 
 
-def confidence_interval_response(y, y_hat, standard_error, df):
-    pass
+def confidence_interval_mean_response(Y0, se_Y0, df, t_table):
+    # compute the confidence interval for the true mean of a response
+    closest_df = min(t_table, key=lambda x: abs(x - df))
+    t_value = t_table[closest_df]
+    upper_bound = Y0 + (t_value * se_Y0)
+    lower_bound = Y0 - (t_value * se_Y0)
+    response_mean_cl = np.stack((lower_bound, upper_bound))
+    return response_mean_cl
 
 
-def prediction_interval_response():
-    pass
+def prediction_interval_response(Y0, se_Y0_hat, df, t_table):
+    # compute the prediction interval for an individual response
+    closest_df = min(t_table, key=lambda x: abs(x - df))
+    t_value = t_table[closest_df]
+    upper_bound = Y0 + (t_value * se_Y0_hat)
+    lower_bound = Y0 - (t_value * se_Y0_hat)
+    observation_pl = np.stack((lower_bound, upper_bound))
+    return observation_pl
 
 
 X, y, beta_true, noise = generate_dummy_data()
@@ -175,10 +187,17 @@ beta_hat, gram_matrix = ols_estimate(X, y)
 y_hat = X @ beta_hat
 MSE, RSS = mean_squared_error(y, y_hat, p)
 beta_hat_var, beta_hat_se = standard_error_beta(MSE, gram_matrix)
-confidence_interval = confidence_interval_beta(beta_hat, beta_hat_se, 3)
+confidence_interval_coe = confidence_interval_beta(beta_hat, beta_hat_se, 3, t_table)
 f_score, TSS = f_statistic(RSS, y, p, n)
 RSE = residual_standard_error(RSS, p, n)
 r2 = r_squared(RSS, TSS)
+i = random.randint(1, n)
+X0 = X[i]  # sample feature
+y0 = y_hat[i]  # predicted value for the sample feature
+var_Y0, se_Y0, var_Y0_hat, se_Y0_hat = standard_error_reponse(X0, MSE, gram_matrix)
+mean_response_cl = confidence_interval_mean_response(y0, se_Y0, 3, t_table)
+new_obs_pl = prediction_interval_response(y0, se_Y0_hat, 3, t_table)
+
 
 print("X shape:", X.shape)
 print("y shape:", y.shape)
@@ -191,6 +210,8 @@ print("Mean squared error= ", round(MSE, 4))
 print("The Gram matrix: \n", gram_matrix)
 print("beta hat variance :\n", beta_hat_var)
 print("beta hat standard error :\n", beta_hat_se)
-print("The confidence interval for the coefficients is  :\n", confidence_interval)
+print("The confidence interval for the coefficients is  :\n", confidence_interval_coe)
 print("The residual standard error (Quality of fit) is :", RSE)
 print("The R-Squared for this model  is :", r2)
+print("the confidence interval for mean response Y0 is ", mean_response_cl)
+print("the prediction interval for an unseen observation is :", new_obs_pl)
