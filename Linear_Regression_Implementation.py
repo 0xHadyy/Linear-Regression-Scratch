@@ -40,7 +40,7 @@ t_table = {
 
 
 # Generating dummy data
-def generate_dummy_data(n=100, p=3, noise_std=1.0, seed=420):
+def generate_dummy_data(n=10000, p=3, noise_std=1.0, seed=420):
     np.random.seed(seed)
 
     X_raw = np.random.randn(
@@ -180,10 +180,35 @@ def prediction_interval_response(Y0, se_Y0_hat, df, t_table):
     return observation_pl
 
 
+def gradient_descent(y, X):
+    y = y.reshape(-1, 1)
+    n = X.shape[0]
+    p = X.shape[1]
+    beta_hat = np.zeros((p, 1))
+    X_T = X.T
+    alpha = 0.01
+    n_iters = 5000
+    batch_size = 500
+    for i in range(n_iters):
+        idx = np.random.choice(n, size=batch_size, replace=False)
+        Xb = X[idx]
+        yb = y[idx].reshape(-1, 1)
+        y_hat = Xb @ beta_hat
+        RSS = y_hat - yb
+        gradient_mse = (Xb.T @ RSS) / batch_size
+        beta_hat_new = beta_hat - alpha * gradient_mse
+
+        if np.linalg.norm(beta_hat_new - beta_hat) < 1e-6:
+            break
+        beta_hat = beta_hat_new
+    return beta_hat
+
+
 X, y, beta_true, noise = generate_dummy_data()
 n = len(y)
 p = X.shape[1]
 beta_hat, gram_matrix = ols_estimate(X, y)
+beta_hat_descent = gradient_descent(y, X)
 y_hat = X @ beta_hat
 MSE, RSS = mean_squared_error(y, y_hat, p)
 beta_hat_var, beta_hat_se = standard_error_beta(MSE, gram_matrix)
@@ -203,7 +228,8 @@ print("X shape:", X.shape)
 print("y shape:", y.shape)
 print("this is response y", y)
 print("True Beta (Coefficients)", beta_true)
-print("Estimated beta (Coefficients) are :", beta_hat)
+print("Estimated beta with OLS (Coefficients)  is :\n", beta_hat)
+print("Estimated beta with Gradient Descent (Coefficients) is :\n", beta_hat_descent)
 print("y_hat:", y_hat.shape)
 print("Residual squared sum =", round(RSS, 4))
 print("Mean squared error= ", round(MSE, 4))
