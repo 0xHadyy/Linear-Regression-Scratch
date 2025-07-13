@@ -1,4 +1,6 @@
 import numpy as np
+import matplotlib.pyplot as plt
+from tabulate import tabulate
 import random
 
 t_table = {
@@ -38,6 +40,13 @@ t_table = {
     float("inf"): 1.960,  # Z‐value approximation
 }
 
+# utils
+np.set_printoptions(precision=4, suppress=True, linewidth=100)
+
+
+def is_invertible(A):
+    return np.linalg.matrix_rank(A) == A.shape[0]
+
 
 # Generating dummy data
 def generate_dummy_data(n=10000, p=3, noise_std=1.0, seed=420):
@@ -63,8 +72,10 @@ def generate_dummy_data(n=10000, p=3, noise_std=1.0, seed=420):
 # Ordinary Least Squares to estimate the closed-form of beta
 def ols_estimate(X, Y):
     # X is also called design matrix
-    X_transpose = np.transpose(X)  # Alernatively X.T
+    X_transpose = X.T  # Alernatively  np.transpose
     gram_matrix = X_transpose @ X
+    if not is_invertible(gram_matrix):
+        raise ValueError(f"The gram matrix with shape{gram_matrix.shape} is sningular")
     beta_hat = (
         np.linalg.inv(gram_matrix) @ X_transpose @ Y
     )  # beta matrix closed form OLS is (X^TX)^-1X^TY
@@ -77,26 +88,33 @@ def predict(X, beta_hat):
     return y_hat
 
 
-# Sample standard deviation Which is the Estimate of the standard deviaion sigma^2
+# Sample standard deviation Which is the Estimate of the standard diviation sigma^2
 def mean_squared_error(y, y_hat, p):
     # Compute the MSE
-    n = len(y)
-    residual_sum_squares = 0.0
-    for i in range(n):
-        residual_sum_squares += np.square(y[i] - y_hat[i])
-    mse = residual_sum_squares / (n - p)  # MSE = 1/n sum(y-y_hat)^2
-    return mse, residual_sum_squares
+    n = y.shape[0]
+    residuals = y - y_hat
+    RSS = np.sum(residuals**2)
+
+    if n - p <= 0:
+        raise ValueError(f"Degrees of freedom (n-p) must be >0, got n={n},p={p}")
+    MSE = RSS / (n - p)
+    return MSE, RSS
 
 
 def standard_error_beta(mse, gram_matrix):
     # Compute the variance of beta_hat
+    if not is_invertible(gram_matrix):
+        raise ValueError("The Gram matrix is signular")
+
     inv_gram_matrix = np.linalg.inv(gram_matrix)
     beta_hat_variance = (
         mse * inv_gram_matrix
     )  # The diagonal represent the variances, while off-diagonal are the covarianecs
+
     beta_hat_standard_error = np.sqrt(
         np.diag(beta_hat_variance)
     )  # taking the square root of only the variances
+
     return beta_hat_variance, beta_hat_standard_error
 
 
@@ -180,15 +198,9 @@ def prediction_interval_response(Y0, se_Y0_hat, df, t_table):
     return observation_pl
 
 
-def gradient_descent(y, X):
+def gradient_descent(y, X, alpha, batch_size, n, p, n_iters):
     y = y.reshape(-1, 1)
-    n = X.shape[0]
-    p = X.shape[1]
     beta_hat = np.zeros((p, 1))
-    X_T = X.T
-    alpha = 0.01
-    n_iters = 5000
-    batch_size = 500
     for i in range(n_iters):
         idx = np.random.choice(n, size=batch_size, replace=False)
         Xb = X[idx]
@@ -207,25 +219,74 @@ def gradient_descent(y, X):
 X, y, beta_true, noise = generate_dummy_data()
 n = len(y)
 p = X.shape[1]
+
+# Estimating The Coefficient Beta with both OLS and Gradient Descent
 beta_hat, gram_matrix = ols_estimate(X, y)
-beta_hat_descent = gradient_descent(y, X)
-y_hat = X @ beta_hat
+# Hyperparameters
+alpha = 0.1
+batch_size = 500
+number_iterations = 5000
+beta_hat_descent = gradient_descent(y, X, alpha, batch_size, n, p, number_iterations)
+
+# Predicted response Y using both estimation methods
+y_hat = predict(X, beta_hat)
+y_hat_descent = predict(X, beta_hat_descent)
+
+
 MSE, RSS = mean_squared_error(y, y_hat, p)
+
 beta_hat_var, beta_hat_se = standard_error_beta(MSE, gram_matrix)
 confidence_interval_coe = confidence_interval_beta(beta_hat, beta_hat_se, 3, t_table)
+
 f_score, TSS = f_statistic(RSS, y, p, n)
+
 RSE = residual_standard_error(RSS, p, n)
 r2 = r_squared(RSS, TSS)
+
+# Randomly picking value for i
 i = random.randint(1, n)
+
 X0 = X[i]  # sample feature
 y0 = y_hat[i]  # predicted value for the sample feature
+
 var_Y0, se_Y0, var_Y0_hat, se_Y0_hat = standard_error_reponse(X0, MSE, gram_matrix)
 mean_response_cl = confidence_interval_mean_response(y0, se_Y0, 3, t_table)
 new_obs_pl = prediction_interval_response(y0, se_Y0_hat, 3, t_table)
 
+# Displaying the  Estimates, Standard Error, Confidence intervals for Coeficcients beta
+labels = [f"β{j}" for j in range(len(beta_true))]
+rows = []
+for betas, estimate, std, (low, high) in zip(
+    labels, beta_hat.flatten(), beta_hat_se, confidence_interval_coe.T
+):
+    rows.append((betas, f"{estimate:.4f}", f"{std:.4f}", f"[{low:.4f},{high:.4f}]"))
+print(
+    tabulate(
+        rows,
+        headers=["Coefficient", "Estimates", "Std.Err", "95% CI"],
+        tablefmt="github",
+    )
+)
 
-print("X shape:", X.shape)
-print("y shape:", y.shape)
+rows = []
+rows.append(
+    (
+        f"{r2:.4f}",
+        f"{RSE:.4f}",
+        f"[{mean_response_cl[0]:.4f},{mean_response_cl[1]}:.4f]",
+        f"[{new_obs_pl[0]:.4f},{new_obs_pl[1]:.4f}]",
+    )
+)
+print(
+    "----------------------------------------------------------------------------------------------"
+)
+print(
+    tabulate(
+        rows,
+        headers=["R-Squared", "RSE", "95% CI mean", "95% PI new obs"],
+        tablefmt="github",
+    )
+)
 print("this is response y", y)
 print("True Beta (Coefficients)", beta_true)
 print("Estimated beta with OLS (Coefficients)  is :\n", beta_hat)
@@ -235,9 +296,3 @@ print("Residual squared sum =", round(RSS, 4))
 print("Mean squared error= ", round(MSE, 4))
 print("The Gram matrix: \n", gram_matrix)
 print("beta hat variance :\n", beta_hat_var)
-print("beta hat standard error :\n", beta_hat_se)
-print("The confidence interval for the coefficients is  :\n", confidence_interval_coe)
-print("The residual standard error (Quality of fit) is :", RSE)
-print("The R-Squared for this model  is :", r2)
-print("the confidence interval for mean response Y0 is ", mean_response_cl)
-print("the prediction interval for an unseen observation is :", new_obs_pl)
