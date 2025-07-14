@@ -1,5 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
 from tabulate import tabulate
 import random
 
@@ -89,7 +88,7 @@ def predict(X, beta_hat):
 
 
 # Sample standard deviation Which is the Estimate of the standard diviation sigma^2
-def mean_squared_error(y, y_hat, p):
+def mean_squared_error(y, y_hat, p, n):
     # Compute the MSE
     n = y.shape[0]
     residuals = y - y_hat
@@ -164,10 +163,9 @@ def standard_error_reponse(X0, MSE, gram_matrix):
         raise ValueError(f"Gram matrix shape {gram_matrix.shape}")
     if MSE < 0:
         raise ValueError("MSE is zero or negative")
-    try:
-        inv_gram_matrix = np.linalg.inv(gram_matrix)
-    except np.linalg.LinAlgError:
-        raise ValueError("Gram matrix is not invertible")
+    if not is_invertible(gram_matrix):
+        raise ValueError("The gram fucntion is singular")
+    inv_gram_matrix = np.linalg.inv(gram_matrix)
     X0_transpose = X0.T
     var_Y0 = MSE * (
         X0_transpose @ inv_gram_matrix @ X0
@@ -233,7 +231,7 @@ y_hat = predict(X, beta_hat)
 y_hat_descent = predict(X, beta_hat_descent)
 
 
-MSE, RSS = mean_squared_error(y, y_hat, p)
+MSE, RSS = mean_squared_error(y, y_hat, p, n)
 
 beta_hat_var, beta_hat_se = standard_error_beta(MSE, gram_matrix)
 confidence_interval_coe = confidence_interval_beta(beta_hat, beta_hat_se, 3, t_table)
