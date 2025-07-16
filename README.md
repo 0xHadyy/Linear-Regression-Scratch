@@ -1,6 +1,6 @@
 # 📊 Linear Regression From Scratch — Full Math & NumPy Implementation
 
-[![PDF Notes](https://img.shields.io/badge/PDF-Theory%20%26%20Practical-blue)](Documentation/Linear\Regression\From\Scratch.pdf)
+[![PDF Notes](https://img.shields.io/badge/PDF-Theory%20%26%20Practical-blue)](Documentation/Linear20%Regression20%From20%Scratch.pdf)
 [![Notebook](https://img.shields.io/badge/Jupyter-Notebook-orange)](Documentation/Linear_Regression_Scratch.ipynb)
 [![YouTube Tutorial](https://img.shields.io/badge/YouTube-Tutorial-red)](https://youtu.be/zCsC7yRjTWM)
 
