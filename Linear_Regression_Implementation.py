@@ -176,22 +176,23 @@ def standard_error_reponse(X0, MSE, gram_matrix):
     return var_Y0, se_Y0, var_Y0_hat, se_Y0_hat
 
 
-def confidence_interval_mean_response(Y0, se_Y0, df, t_table):
+def confidence_interval_mean_response(Y0, se_Y0_hat, df, t_table):
     # compute the confidence interval for the true mean of a response
-    closest_df = min(t_table, key=lambda x: abs(x - df))
-    t_value = t_table[closest_df]
-    upper_bound = Y0 + (t_value * se_Y0)
-    lower_bound = Y0 - (t_value * se_Y0)
-    response_mean_cl = np.stack((lower_bound, upper_bound))
-    return response_mean_cl
-
-
-def prediction_interval_response(Y0, se_Y0_hat, df, t_table):
-    # compute the prediction interval for an individual response
     closest_df = min(t_table, key=lambda x: abs(x - df))
     t_value = t_table[closest_df]
     upper_bound = Y0 + (t_value * se_Y0_hat)
     lower_bound = Y0 - (t_value * se_Y0_hat)
+    response_mean_cl = np.stack((lower_bound, upper_bound))
+    return response_mean_cl
+
+
+def prediction_interval_response(Y0, se_Y0_hat, MSE, df, t_table):
+    # compute the prediction interval for an individual response
+    closest_df = min(t_table, key=lambda x: abs(x - df))
+    t_value = t_table[closest_df]
+    se_pi = np.sqrt(se_Y0_hat**2 + MSE)
+    upper_bound = Y0 + (t_value * se_pi)
+    lower_bound = Y0 - (t_value * se_pi)
     observation_pl = np.stack((lower_bound, upper_bound))
     return observation_pl
 
@@ -244,12 +245,13 @@ r2 = r_squared(RSS, TSS)
 # Randomly picking value for i
 i = random.randint(1, n)
 
-X0 = X[i]  # sample feature
-y0 = y_hat[i]  # predicted value for the sample feature
+X0 = np.random.normal(size=(3,))
+Y0 = predict(X0, beta_hat)
+
 
 var_Y0, se_Y0, var_Y0_hat, se_Y0_hat = standard_error_reponse(X0, MSE, gram_matrix)
-mean_response_cl = confidence_interval_mean_response(y0, se_Y0, 3, t_table)
-new_obs_pl = prediction_interval_response(y0, se_Y0_hat, 3, t_table)
+mean_response_cl = confidence_interval_mean_response(Y0, se_Y0_hat, 3, t_table)
+new_obs_pl = prediction_interval_response(Y0, se_Y0_hat, MSE, 3, t_table)
 
 # Displaying the  Estimates, Standard Error, Confidence intervals for Coeficcients beta
 labels = [f"β{j}" for j in range(len(beta_true))]
@@ -271,7 +273,7 @@ rows.append(
     (
         f"{r2:.4f}",
         f"{RSE:.4f}",
-        f"[{mean_response_cl[0]:.4f},{mean_response_cl[1]}:.4f]",
+        f"[{mean_response_cl[0]:.4f},{mean_response_cl[1]:.4f}]",
         f"[{new_obs_pl[0]:.4f},{new_obs_pl[1]:.4f}]",
     )
 )
