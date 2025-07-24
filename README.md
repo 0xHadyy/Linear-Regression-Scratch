@@ -1,16 +1,19 @@
 # 📊 Linear Regression From Scratch — Full Math & NumPy Implementation
 
-[![PDF Notes](https://img.shields.io/badge/PDF-Theory%20%26%20Practical-blue)](Documentation/Linear20%Regression20%From20%Scratch.pdf)
+[![PDF Notes](https://img.shields.io/badge/PDF-Theory%20%26%20Practical-blue)](Documentation/Linear%20Regression%20From%20Scratch.pdf)
 [![Notebook](https://img.shields.io/badge/Jupyter-Notebook-orange)](Documentation/Linear_Regression_Scratch.ipynb)
 [![YouTube Tutorial](https://img.shields.io/badge/YouTube-Tutorial-red)](https://youtu.be/zCsC7yRjTWM)
 
 This repo is my full implementation of multiple linear regression **from scratch** using only **NumPy**. It includes full mathematical derivations, practical Python code,Fully explanted jupyter Notebook and PDF notes. All as part of my journey studying and documenting **Machine Learning**.
 
+<p align="center">
+<img src="https://s14.gifyu.com/images/bKtcy.gif" />
+</p>
 
 ## 📋 Table of Contents
 
-1. [Topics Covered](#topics-covered)  
-2. [Installation & Usage](#installation--usage)  
+1. [Topics Covered](#Topics-Covered)  
+2. [Installation & Usage](#Installation--usage)  
 3. [How to Run](#how-to-run)  
 4. [References](#references)  
 
@@ -52,7 +55,7 @@ This repo is my full implementation of multiple linear regression **from scratch
    cd Linear-Regression-From-Scratch```
 2. **Install dependencies**
    ```bash 
-   pip install -r requirements.txt```
+   pip install -r requirements.txt
 3. **Run the Implementation**   
     ```bash
    # Run The Notebook
